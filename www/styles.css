@@ -1,0 +1,77 @@
+.img_text {
+  margin-left: 10px;
+  margin-right: 10px;
+  float: left;
+}
+
+.info-box {
+  display: block;
+  min-height: 90px;
+  background: #fff;
+  color: red;
+  width: 100%;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+/* Sidebar panel */
+.well {
+  background-color: #fff;
+  border-style: none;
+}
+
+.alert {
+  padding: 20px;
+  background-color: #f44336; /* Red */
+  color: white;
+  margin-bottom: 15px;
+}
+
+.info {
+  padding: 20px;
+  background-color: #0066ff; /* Blue */
+  color: white;
+  margin-bottom: 15px;
+}
+
+/* http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3 */
+
+.borderscenario12 {
+  border: solid #e41a1c 3px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.borderscenario22 {
+  border: solid #377eb8 3px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.borderscenario32 {
+  border: solid #4daf4a 3px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+
+
+
+.left {
+  float: left;
+}
+
+
+.cent {
+  width: 50%;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.right {
+  float: right;
+}
+
+
