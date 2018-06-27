@@ -9,6 +9,18 @@ shinyServer(
     # Parameters values
     output$parameters_values <- renderText("")
     
+    output$info_c1max_s1 <- renderText(paste0("Baseline is ", parameters$c1max[1]))
+    output$info_c2max_s1 <- renderText(paste0("Baseline is ", parameters$c2max[1]))
+    output$info_c3max_s1 <- renderText(paste0("Baseline is ", parameters$c3max[1]))
+    output$info_cpmax_s1 <- renderText(paste0("Baseline is ", parameters$cpmax[1]))
+    output$info_precmax_s1 <- renderText(paste0("Baseline is ", parameters$precmax[1]))
+    
+    output$info_c1max_s2 <- renderText(paste0("Baseline is ", parameters$c1max[1]))
+    output$info_c2max_s2 <- renderText(paste0("Baseline is ", parameters$c2max[1]))
+    output$info_c3max_s2 <- renderText(paste0("Baseline is ", parameters$c3max[1]))
+    output$info_cpmax_s2 <- renderText(paste0("Baseline is ", parameters$cpmax[1]))
+    output$info_precmax_s2 <- renderText(paste0("Baseline is ", parameters$precmax[1]))
+    
     # Create a reactiveValues object
     simul <- reactiveValues(iter = 0, start_time = Sys.time(), 
                             results_incidence_s1 = NULL, results_s1 = NULL, 
@@ -20,6 +32,9 @@ shinyServer(
       # Re-initiate values
       simul$iter <- 0
       simul$start_time <- Sys.time()
+      
+      showNotification(id = "model_running", closeButton = FALSE, 
+                       ui = HTML(paste0(h3("Model Running"))), duration = NULL, type = "message", session = session)
       
       simul$results_incidence_s1 <- data.frame(NULL)
       simul$results_s1 <- data.frame(
@@ -48,8 +63,7 @@ shinyServer(
             return()
           } else {
             simul$iter <- simul$iter + 1
-            
-            
+
             # Placeholder for the extensive computing -------------------------
             # -----------------------------------------------------------------
             
@@ -61,12 +75,18 @@ shinyServer(
             
             # Scenario 1
             # -----------------------------------------------------------------
-
-            # Update parameters and run the model
+            
+            # Update parameters based on the UI and run the model
             parameters$R0 <- rep(input$r0_s1, A)
             parameters$wait_treat <- input$wait_treat_s1
             parameters["q"] <- simul$results_s1$qq[simul$iter]
-            
+            parameters$c1max[2] <- input$c1max_s1
+            parameters$c2max[2] <- input$c2max_s1
+            parameters$c3max[2] <- input$c3max_s1
+            parameters$cpmax[2] <- input$cpmax_s1
+            parameters$nupmax[2] <- 365/input$nupmax_s1
+            parameters$precmax[2] <- input$precmax_s1
+
             out <- ode(y = X, times = times, func = MedQual, parms = parameters, method = "vode")
             
             # Extract and process results
@@ -110,16 +130,16 @@ shinyServer(
             
             # append results
             simul$results_incidence_s1 <- bind_rows(simul$results_incidence_s1, 
-                                   data.frame(
-                                     q = simul$iter,
-                                     t = t, 
-                                     inc_month = inc_month[, 2],
-                                     totinc_month = totinc_month,
-                                     presinc_month = presinc_month,
-                                     prev = prev[, 2],
-                                     totprev = totprev,
-                                     presprev = presprev,
-                                     pop = 50 * pop[, 1] / parameters$N)
+                                                    data.frame(
+                                                      q = simul$iter,
+                                                      t = t, 
+                                                      inc_month = inc_month[, 2],
+                                                      totinc_month = totinc_month,
+                                                      presinc_month = presinc_month,
+                                                      prev = prev[, 2],
+                                                      totprev = totprev,
+                                                      presprev = presprev,
+                                                      pop = 50 * pop[, 1] / parameters$N)
             )
             
             
@@ -130,6 +150,12 @@ shinyServer(
             parameters$R0 <- rep(input$r0_s2, A)
             parameters$wait_treat <- input$wait_treat_s2
             parameters["q"] <- simul$results_s2$qq[simul$iter]
+            parameters$c1max[2] <- input$c1max_s2
+            parameters$c2max[2] <- input$c2max_s2
+            parameters$c3max[2] <- input$c3max_s2
+            parameters$cpmax[2] <- input$cpmax_s2
+            parameters$nupmax[2] <- 365/input$nupmax_s2
+            parameters$precmax[2] <- input$precmax_s2
             
             out <- ode(y = X, times = times, func = MedQual, parms = parameters, method = "vode")
             
@@ -174,22 +200,30 @@ shinyServer(
             
             # append results
             simul$results_incidence_s2 <- bind_rows(simul$results_incidence_s2, 
-                                                     data.frame(
-                                                       q = simul$iter,
-                                                       t = t, 
-                                                       inc_month = inc_month[, 2],
-                                                       totinc_month = totinc_month,
-                                                       presinc_month = presinc_month,
-                                                       prev = prev[, 2],
-                                                       totprev = totprev,
-                                                       presprev = presprev,
-                                                       pop = 50 * pop[, 1] / parameters$N)
+                                                    data.frame(
+                                                      q = simul$iter,
+                                                      t = t, 
+                                                      inc_month = inc_month[, 2],
+                                                      totinc_month = totinc_month,
+                                                      presinc_month = presinc_month,
+                                                      prev = prev[, 2],
+                                                      totprev = totprev,
+                                                      presprev = presprev,
+                                                      pop = 50 * pop[, 1] / parameters$N)
             )
+            
+            showNotification(id = "model_running", closeButton = FALSE, 
+                             ui = HTML(paste0("Progress: ", round(simul$iter / (isolate(input$total_q) + 1) * 100), "%", " — ",
+                                              "total elapsed time: ", round(Sys.time() - simul$start_time, 1), " seconds")), 
+                             duration = NULL, type = "message", session = session)
             
             # -----------------------------------------------------------------
             
             # Stop at the end
-            if(simul$iter == isolate(input$total_q) + 1) simul$finished <- TRUE
+            if(simul$iter == isolate(input$total_q) + 1) {
+              simul$finished <- TRUE
+              removeNotification(id = "model_running", session = session)
+            }
           }
         })
       })
@@ -197,38 +231,57 @@ shinyServer(
     
     
     # Update with progress
-    output$progress_update <- renderText({
-      paste0("Progress: ", round(simul$iter / (isolate(input$total_q) + 1) * 100), "%", " — ",
-             "total elapsed time: ", round(Sys.time() - simul$start_time, 1), " seconds")
-    })
+    # output$progress_update <- renderText({
+    #   paste0("Progress: ", round(simul$iter / (isolate(input$total_q) + 1) * 100), "%", " — ",
+    #          "total elapsed time: ", round(Sys.time() - simul$start_time, 1), " seconds")
+    # })
+
     
     # Plot the incidence
     output$plot_incidence_s1 <- renderPlot({
       if(simul$iter == 0) return(plot(0, xaxt='n', yaxt='n', bty='n', pch='', ylab='', xlab=''))
       
-     ggplot(simul$results_incidence_s1 %>% 
-              filter(t > 0, q == ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                                                          input$slider_iter + 1,
-                                                          simul$iter)), 
-            aes(x = t)) +
-        geom_line(aes(y = totinc_month), lwd = 2) +
-        geom_line(aes(y = inc_month), col = "red", lwd = 2) +
-       labs(title = "Incidence", x = "Years", y = "Cases per 1,000 per month") +
-       theme_minimal(base_size = 17)
+      iter <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
+                     round(input$slider_iter * isolate(input$total_q)) + 1,
+                     simul$iter)
+      
+      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
+                           round(input$slider_iter * isolate(input$total_q)),
+                           simul$iter - 1)
+      
+      return(
+      ggplot(simul$results_incidence_s1 %>% 
+               filter(t > 0, q == iter), 
+             aes(x = t)) +
+        geom_line(aes(y = totinc_month), lwd = 1.5) +
+        geom_line(aes(y = inc_month), col = "red", lty = 2, lwd = 1.5) +
+        labs(title = "Incidence", subtitle = paste0("Quality = ", selected_q / isolate(input$total_q)),
+             x = "Years", y = "Cases per 1,000 per month") +
+        theme_minimal(base_size = 17)
+      )
     })
     
     output$plot_incidence_s2 <- renderPlot({
       if(simul$iter == 0) return(plot(0, xaxt='n', yaxt='n', bty='n', pch='', ylab='', xlab=''))
       
-      ggplot(simul$results_incidence_s2 %>% 
-               filter(t > 0, q == ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                                         input$slider_iter + 1,
-                                         simul$iter)), 
+      iter <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
+                     round(input$slider_iter * isolate(input$total_q)) + 1,
+                     simul$iter)
+      
+      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
+                           round(input$slider_iter * isolate(input$total_q)),
+                           simul$iter - 1)
+      
+      return(
+        ggplot(simul$results_incidence_s2 %>% 
+               filter(t > 0, q == iter), 
              aes(x = t)) +
-        geom_line(aes(y = totinc_month), lwd = 2) +
-        geom_line(aes(y = inc_month), col = "red", lwd = 2) +
-        labs(title = "Incidence", x = "Years", y = "Cases per 1,000 per month") +
+        geom_line(aes(y = totinc_month), lwd = 1.5) +
+        geom_line(aes(y = inc_month), col = "red", lty = 2, lwd = 1.5) +
+          labs(title = "Incidence", subtitle = paste0("Quality = ", selected_q / isolate(input$total_q)),
+             x = "Years", y = "Cases per 1,000 per month") +
         theme_minimal(base_size = 17)
+      )
     })
     
     # Plot the global incidence
@@ -236,19 +289,13 @@ shinyServer(
       if(simul$iter == 0) return(plot(0, xaxt='n', yaxt='n', bty='n', pch='', ylab='', xlab=''))
       
       selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           input$slider_iter,
+                           round(input$slider_iter * isolate(input$total_q)),
                            simul$iter - 1)
       
       ggplot(data = simul$results_s1, aes(x = qq, y = cinc)) +
-        geom_line(lwd = 2) +
+        geom_line(lwd = 1.5) +
         geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.5) +
         geom_vline(xintercept = selected_q / isolate(input$total_q), lty = 2) +
-        # geom_rect(xmin = selected_q / isolate(input$total_q), 
-        #           xmax = 1,
-        #           ymin = 0,
-        #           ymax = max(simul$results[1:selected_q, "cinc"]), 
-        #           alpha = 0.2,
-        #           color = "white") +
         labs(title = "Impact of Medicine Quality", 
              x = "Medicine quality level (proxy for API)", 
              y = "Cumulative incidence") +
@@ -259,19 +306,13 @@ shinyServer(
       if(simul$iter == 0) return(plot(0, xaxt='n', yaxt='n', bty='n', pch='', ylab='', xlab=''))
       
       selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           input$slider_iter,
+                           round(input$slider_iter * isolate(input$total_q)),
                            simul$iter - 1)
       
       ggplot(data = simul$results_s2, aes(x = qq, y = cinc)) +
-        geom_line(lwd = 2) +
+        geom_line(lwd = 1.5) +
         geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.5) +
         geom_vline(xintercept = selected_q / isolate(input$total_q), lty = 2) +
-        # geom_rect(xmin = selected_q / isolate(input$total_q), 
-        #           xmax = 1,
-        #           ymin = 0,
-        #           ymax = max(simul$results[1:selected_q, "cinc"]), 
-        #           alpha = 0.2,
-        #           color = "white") +
         labs(title = "Impact of Medicine Quality", 
              x = "Medicine quality level (proxy for API)", 
              y = "Cumulative incidence") +
@@ -284,8 +325,9 @@ shinyServer(
       else {tagList(
         br(), br(),
         sliderInput("slider_iter", label = "Medicine quality level",
-                    min = 0, max = isolate(input$total_q), value = isolate(input$total_q), 
-                    step = 1, animate = TRUE, width = "100%", ticks = TRUE, pre = "q = ")
+                    min = 0, max = 1, value = 1, 
+                    step = 1/isolate(input$total_q), animate = list(interval = 3000, loop = TRUE), width = "100%", 
+                    ticks = TRUE, pre = "quality = ")
       )}
     })
   })

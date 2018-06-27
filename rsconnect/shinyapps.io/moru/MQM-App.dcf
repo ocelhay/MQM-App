@@ -1,0 +1,13 @@
+name: MQM-App
+title: MQM-App
+username:
+account: moru
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 367547
+bundleId: 1451422
+url: https://moru.shinyapps.io/MQM-App/
+when: 1530077403.97896
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .gitattributes

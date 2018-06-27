@@ -6,6 +6,7 @@
 library(deSolve)
 library(shiny)
 library(shinythemes)
+library(shinyWidgets)
 library(tidyverse)
 
 source("./www/MedQual.R")

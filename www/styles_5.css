@@ -26,8 +26,8 @@
 
 .shiny-notification {
              position:fixed;
-             top: calc(50%);;
-             left: calc(50%);;
+             top: calc(2%);;
+             left: calc(45%);;
              }
 
 .alert {

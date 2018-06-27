@@ -27,7 +27,7 @@ parameters <- list(
   c2max=c(0.99,0.00),          # proprtion who cure on day 2 of treatment
   c3max=c(0.99,0.00),          # proprtion who cure on day 3 of treatment
   cpmax=c(0.99,0.60),          # proprtion who cure during partner drug treatment
-  nupmax=365/2,                    # clearance by partner drug after day 3 of treatment
+  nupmax=365/2,                # day 2 clearance by partner drug after day 3 of treatment (2 is the quantity)
   
   rho = 365/20,        # rate of recrudescence
   nu1 = 365/1,         # day 1 to day 2
