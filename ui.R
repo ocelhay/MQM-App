@@ -3,10 +3,7 @@
 # ui.R  definition of the user interface
 # -----------------------------------------------------------------------------
 
-fluidPage(
-  includeCSS("./www/styles_5.css"),
-  
-  theme = shinytheme("readable"),
+fluidPage(includeCSS("./www/styles.css"), theme = shinytheme("readable"),
   
   mainPanel(width = 12,
             navbarPage(NULL, position = "static-top", id = "tabs", collapsible = TRUE,  windowTitle = "Medicine Quality App",

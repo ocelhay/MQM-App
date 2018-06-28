@@ -27,7 +27,8 @@ MedQual <- function(t, X, parameters) {
     c3max <-parameters$c3max
     cpmax <-parameters$cpmax
     precmax <-parameters$precmax
-    
+    kRes2Sens <-parameters$kRes2Sens
+    lam   <-parameters$lam
     
     # define variables
     N <- (S+T1+T2+T3+Tp+Tr+IC1+IA1+IU1+P+R)
@@ -57,87 +58,41 @@ MedQual <- function(t, X, parameters) {
     fw <- ((t>tf)*rf)*f
     
     #############################################################
-    # INFLUENCES
-    #cross-immunity
-    ps<-ps*R0/R0
-    ps[1]<-ps[1]#*(1-R[2]/N[2])+pr*(R[2]/N[2])
-    ps[2]<-ps[2]#*(1-R[1]/N[1])+pr*(R[1]/N[1])
+    # sensitive Out-Cmplete Resistance WhenNoDrug  INFLUENCES
+    ## 1) the present of sensitive parasites will prevent infection by resistant parasites
+    lam <-lam
+    lam[2] <- lam[2]*(1-(1/N[2])*((nuD[1]/(365+nuD[1]))*T1[1]+(2*nuD[1]/(365+2*nuD[1]))*T2[1]+(3*nuD[1]/(365+3*nuD[1]))*T3[1]+IC1[1]+IA1[1]+IU1[1]+Tr[1]))
+    # lam[2] <- lam[2]*(1-(1/N[2])*(IC1[1]+IA1[1]+IU1[1]+Tr[1]))                   
     
-    # type replacement - no treatment
-    # already infected with resistant and then get infected with sensitive
-    s2r_tna <- R0/R0
-    s2r_tna[1]<- 0
-    s2r_tna[2]<- lam[1]*(S[1]+R[1])/N[1]
-    # already infected with sensitive and then get challenged with resistant
-    s2r_tnb <- R0/R0
-    s2r_tnb[1]<- 0
-    s2r_tnb[2]<- (IC1[1]+IA1[1]+IU1[1])/N[1]
-    
-    # type replacement upon treatment
-    r2s_tya <- R0/R0
-    r2s_tya[1]<- (IC1[2]+IA1[2]+IU1[2])/N[2]
-    r2s_tya[2]<- 0
-    
-    
-    
-    
-    
-    
-    
-    
-    # # haven't finished this yet   
-    #   # blocking infection due to drug [think selective window]
-    #   # for T3[1] Tp[1] and Tr[1] -> P[1] instead of IC1[1]
-    #   muts2r_Ca <- R0/R0
-    #   muts2r_Ca[1]<-gammaC*(S[2]+R[2])/N[2]
-    #   muts2r_Ca[2]<-0
-    #   # for S[2] and R2 -> IC1[2] new flow rate based on flows out of the Ts
-    #   muts2r_Cb <- R0/R0
-    #   muts2r_Cb[1]<-0
-    #   muts2r_Cb[2]<-gammaC*(xx*T3[1]+xx*Tp[1]+rho*Tr[1])/N[1]
-    #   
-    #   # repeat for IA
-    #   # incude gammaC and gammaA in parameter list
-    #   # they will be linked to PK and to sens vs res
-    #   # longer runs and IC for res not necessary
-    #  
-    #     # haven't finished this yet   
-    
-    
-    # mutation on treatment failure [think selective window]
-    # ie a proportion of senstive failures become resistant
-    
+    ## 2) if a resistance is co-infected with a sensitive infection, then the sensitive infection replaces the resistance one.
+    kRes2Sens[1] <- 0
+    kRes2Sens[2] <- ((S[1]+R[1])/N[1])*lam[1]
     
     
     #############################################################
-    
-    
-    
     # rate of change
     dS <- mui*N-muo*S+omega*R -lam*S
     
-    dT1 <- -muo*T1+treat*IC1+treat*r2s_tya*(IC1+IA1+IU1)-nu1*T1
-    dT2 <- -muo*T2+(1-c1)*nu1*T1-nu2*T2
-    dT3 <- -muo*T3+(1-c2)*nu2*T2-nu3*T3
+    dT1 <- -muo*T1+treat*IC1-nu1*T1 -(nuD[1]/(365+nuD[1]))*kRes2Sens*T1
+    dT2 <- -muo*T2+(1-c1)*nu1*T1-nu2*T2 -(2*nuD[1]/(365+2*nuD[1]))*kRes2Sens*T2
+    dT3 <- -muo*T3+(1-c2)*nu2*T2-nu3*T3 -(3*nuD[1]/(365+3*nuD[1]))*kRes2Sens*T3
     dTp <- -muo*Tp+(1-theta)*(1-c3)*nu3*T3-(nuD+nup)*Tp-fw*Tp
     
-    dTr <- -muo*Tr+prec*c1*nu1*T1+prec*c2*nu2*T2+prec*c3*nu3*T3-rho*Tr+prec*cp*(nuD+nup)*Tp
+    dTr <- -muo*Tr+prec*c1*nu1*T1+prec*c2*nu2*T2+prec*c3*nu3*T3-rho*Tr+prec*cp*(nuD+nup)*Tp -kRes2Sens*Tr
     
-    dIC1 <- -muo*IC1 +lam*(1-s2r_tnb)*ps*S+lam*(1-s2r_tnb)*pr*R-treat*(1-r2s_tya)*IC1-nuC*IC1 -sensC*fw*IC1 +rho*Tr+theta*(1-c3)*nu3*T3-s2r_tna*IC1-treat*r2s_tya*IC1
-    dIA1 <- -muo*IA1 +lam*(1-s2r_tnb)*(1-ps)*S+lam*(1-s2r_tnb)*(1-pr)*R   +(1-prec)*(1-cp)*(nuD+nup)*Tp+nuC*IC1 -nuA*IA1-sensA*fw*IA1-s2r_tna*IA1-treat*r2s_tya*IA1
-    dIU1 <- -muo*IU1 +nuA*IA1 -nuU*IU1 -sensU*fw*IU1-s2r_tna*IU1-treat*r2s_tya*IU1
+    dIC1 <- -muo*IC1 +lam*ps*S+lam*pr*R -treat*IC1-nuC*IC1 -sensC*fw*IC1 +rho*Tr +theta*(1-c3)*nu3*T3 -kRes2Sens*IC1
+    dIA1 <- -muo*IA1 +lam*(1-ps)*S+lam*(1-pr)*R   +(1-prec)*(1-cp)*(nuD+nup)*Tp+nuC*IC1 -nuA*IA1-sensA*fw*IA1 -kRes2Sens*IA1
+    dIU1 <- -muo*IU1 +nuA*IA1 -nuU*IU1 -sensU*fw*IU1 -kRes2Sens*IU1
     
-    dP <- -muo*P -nuD*P +(1-prec)*c1*nu1*T1+(1-prec)*c2*nu2*T2+(1-prec)*c3*nu3*T3+(1-prec)*cp*(nuD+nup)*Tp+treat*r2s_tya*IC1
-    dR <- -muo*R +nuU*IU1+nuD*P -omega*R-lam*(1-s2r_tnb)*R+s2r_tna*(IC1+IA1+IU1)+lam*s2r_tnb*S
+    dP <- -muo*P -nuD*P +(1-prec)*c1*nu1*T1+(1-prec)*c2*nu2*T2+(1-prec)*c3*nu3*T3+(1-prec)*cp*(nuD+nup)*Tp
+    dR <- -muo*R +nuU*IU1+nuD*P -omega*R-lam*R +kRes2Sens*(IC1+IA1+IU1+Tr)+(((nuD[1]/(365+nuD[1]))*kRes2Sens*T1)+((2*nuD[1]/(365+2*nuD[1]))*kRes2Sens*T2)+((3*nuD[1]/(365+3*nuD[1]))*kRes2Sens*T3))
     
     dCumInc <- treat*IC1
     dFail <- fw*Tp+sensC*fw*IC1+sensA*fw*IA1+sensU*fw*IU1
     dpositiveDay3up <-T3+Tp
     dpositiveDay1up <-T1+T2+T3+Tp
     
-    
     #  percentage of all treated infections which either recrudesce or don't clear  
-    
     
     # return the rate of change
     list(c(dS, 

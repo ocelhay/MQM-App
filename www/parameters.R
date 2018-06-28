@@ -27,7 +27,7 @@ parameters <- list(
   c2max=c(0.99,0.00),          # proprtion who cure on day 2 of treatment
   c3max=c(0.99,0.00),          # proprtion who cure on day 3 of treatment
   cpmax=c(0.99,0.60),          # proprtion who cure during partner drug treatment
-  nupmax=365/2,                # day 2 clearance by partner drug after day 3 of treatment (2 is the quantity)
+  nupmax=365/2,                    # clearance by partner drug after day 3 of treatment
   
   rho = 365/20,        # rate of recrudescence
   nu1 = 365/1,         # day 1 to day 2
@@ -49,17 +49,20 @@ parameters <- list(
   sensU=0.00,          # sensitivity of diganostic test to identify undet malaria
   f=0,                 # switch on follow up
   kA=0.7,              # relative infectiousness of asymptomatics compared to clinicals
-  kU=0.3              # relative infectiousness of undetected compared to clinicals
+  kU=0.3,              # relative infectiousness of undetected compared to clinicals
+  kRes2Sens=rep(0, A), # relative sensitive parasite out-complete resistance parasite when no drug
+  lam=rep(0, A)
+  
 )
 
 
 # define the indices for each parameter ---------------------------------------
-index_parameters <- c("Nindex", "muiindex", "muoindex", rep("R0index", A), "psindex", "prindex",
+index_parameters <- c("Nindex", "muiindex", "muoindex", rep("R0index", A),
                       "wait_treatindex", "omegaindex", "nuCindex", "nuAindex", "nuUindex", "t_treatindex",
                       rep("c1maxindex", A), rep("c2maxindex", A), rep("c3maxindex", A), rep("cpmaxindex", A),
                       "nupmaxindex", "rhoindex", "nu1index", "nu2index", "nu3index", rep("precmaxindex", A),
                       "precminindex", "thetamaxindex", "nuDminindex", "qindex", "ampindex", "phiindex",
-                      "sensCindex", "sensAindex", "sensUindex", "findex", "KAindex", "KUindex")
+                      "sensCindex", "sensAindex", "sensUindex", "findex", "KAindex", "KUindex","kRes2Sensindex", "lamindex")
 
 
 # initial values for the ODE system
