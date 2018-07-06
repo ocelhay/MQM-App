@@ -1,3 +1,9 @@
+/* Label and input on the same row
+https://stackoverflow.com/questions/20850483/how-to-put-a-box-and-its-label-in-the-same-row-shiny-package */
+#inline label{ display: table-cell; text-align: center; vertical-align: middle; } 
+#inline .form-group { display: table-row;}
+
+
 .img_text {
   margin-left: 10px;
   margin-right: 10px;
@@ -48,19 +54,13 @@
 
 .borderscenario12 {
   border: solid #e41a1c 3px;
-  padding: 10px;
+  padding: 0 5px 5px 10px;
   border-radius: 8px;
 }
 
 .borderscenario22 {
   border: solid #377eb8 3px;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.borderscenario32 {
-  border: solid #4daf4a 3px;
-  padding: 10px;
+  padding: 0 5px 5px 10px;
   border-radius: 8px;
 }
 
@@ -72,13 +72,14 @@
 }
 
 
-.cent {
-  width: 50%;
+.cent2 {
+  padding: 5px 5px 5px 5px;
   text-align: center;
   margin: 0 auto;
 }
 
-.right {
+.right2 {
+  padding: 5px 5px 5px 5px;
   float: right;
 }
 
