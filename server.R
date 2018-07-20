@@ -3,362 +3,189 @@
 # server.R  server logic
 # -----------------------------------------------------------------------------
 
-shinyServer(
-  function(input, output, session) {
-    
-    # Display parameters values
-    output$parameters_values <- renderText(paste0(em("Placeholder for some info on the values of the parameters common to both scenarios: population, proportion of non-immune cases that become clinical, etc.")))
-    
-    # Scenario 1
-    output$info_c1max_s1 <- renderText(paste0("Baseline is ", parameters$c1max[1]))
-    output$info_c2max_s1 <- renderText(paste0("Baseline is ", parameters$c2max[1]))
-    output$info_c3max_s1 <- renderText(paste0("Baseline is ", parameters$c3max[1]))
-    output$info_cpmax_s1 <- renderText(paste0("Baseline is ", parameters$cpmax[1]))
-    output$info_precmax_s1 <- renderText(paste0("Baseline is ", parameters$precmax[1]))
-    
-    # Scenario 2
-    output$info_c1max_s2 <- renderText(paste0("Baseline is ", parameters$c1max[1]))
-    output$info_c2max_s2 <- renderText(paste0("Baseline is ", parameters$c2max[1]))
-    output$info_c3max_s2 <- renderText(paste0("Baseline is ", parameters$c3max[1]))
-    output$info_cpmax_s2 <- renderText(paste0("Baseline is ", parameters$cpmax[1]))
-    output$info_precmax_s2 <- renderText(paste0("Baseline is ", parameters$precmax[1]))
-    
-    
-    # Object to store results
-    simul <- reactiveValues(iter = 0, 
-                            start_time = NULL, 
-                            status_s1 = 0,
-                            status_s2 = 0,
-                            results_incidence_s1 = NULL, results_s1 = NULL, 
-                            results_incidence_s2 = NULL, results_s2 = NULL, 
-                            finished = FALSE,
-                            plot_incidence_s1 = list(),
-                            plot_global_s1 = list())
-    
-    
-    # Execute every time run (Run Both Scenarios) is press
-    observeEvent(input$run, {
-      
-      showNotification(id = "model_running", closeButton = FALSE, 
-                       ui = HTML(paste0(h3("Model Running"), p("it might take up to several minutes depending on the total number of steps choosen."))), 
-                       duration = NULL, type = "message", session = session)
-      
-      # Re-initiate values at each press of "Run" button
-      simul$iter <- 0
-      simul$start_time <- Sys.time()
-      simul$status_s1 <- 1
-      simul$status_s2 <- 1
-      simul$finished <- FALSE
-      simul$results_incidence_s1 <- data.frame(NULL)
-      simul$results_s1 <- data.frame(
-        nq = 1:(input$total_q + 1),
-        qq = (0:input$total_q)/input$total_q, 
-        cinc = NA, 
-        cincres = NA)
-      simul$results_incidence_s2 <- data.frame(NULL)
-      simul$results_s2 <- data.frame(
-        nq = 1:(input$total_q + 1),
-        qq = (0:input$total_q)/input$total_q, 
-        cinc = NA, 
-        cincres = NA)
-      
-      
-      observe({
-        # Re-execute this reactive expression immediately after it finishes (though you can also specify a longer time:
-        # e.g. 1000 means re-execute after 1000 milliseconds have passed since it was last executed)
-        # adapted from https://gist.github.com/bborgesr/61409e3852feb991336757f06392e52a
-        invalidateLater(1000, session)
-        isolate({
-          if (simul$finished == TRUE) {
-            return()
-          } else {
-            simul$iter <- simul$iter + 1
-            
-            # Placeholder for the extensive computing -------------------------
-            # -----------------------------------------------------------------
-            
-            # Correspondance rmarkdown ~ shiny app:
-            # i         ~ simul$iter
-            # nq        ~ input$total_q
-            # results_q ~ simul$results_incidence
-            # results   ~ simul$results
-            
-            # Scenario 1
-            # -----------------------------------------------------------------
-            
-            # Update parameters based on the UI and run the model
-            parameters$R0 <- rep(input$r0_s1, A)
-            parameters$wait_treat <- input$wait_treat_s1
-            parameters["q"] <- simul$results_s1$qq[simul$iter]
-            parameters$c1max[2] <- input$c1max_s1
-            parameters$c2max[2] <- input$c2max_s1
-            parameters$c3max[2] <- input$c3max_s1
-            parameters$cpmax[2] <- input$cpmax_s1
-            parameters$nupmax[2] <- 365/input$nupmax_s1
-            parameters$precmax[2] <- input$precmax_s1
-            
-            out <- ode(y = X, times = times, func = MedQual, parms = parameters, method = "vode")
-            source("./www/process_results.R", local = TRUE)
-            
-            # save key output (cumulative incidence)
-            simul$results_s1[simul$iter, "qq"] <- (simul$iter - 1)/input$total_q
-            simul$results_s1[simul$iter, "cinc"] <- sum(CumInc[nt, ]) - (prod(CumInc[nt,]) / (maxt - parameters$t_treat * 1000))
-            simul$results_s1[simul$iter, "cincres"] <- CumInc[nt, 2]
-            
-            # append results
-            simul$results_incidence_s1 <- bind_rows(simul$results_incidence_s1, 
-                                                    data.frame(
-                                                      q = simul$iter,
-                                                      t = t, 
-                                                      inc_month = inc_month[, 2],
-                                                      totinc_month = totinc_month,
-                                                      presinc_month = presinc_month,
-                                                      prev = prev[, 2],
-                                                      totprev = totprev,
-                                                      presprev = presprev,
-                                                      pop = 50 * pop[, 1] / parameters$N)
-            )
-            
-            # Scenario 2
-            # -----------------------------------------------------------------
-            
-            # Update parameters and run the model
-            parameters$R0 <- rep(input$r0_s2, A)
-            parameters$wait_treat <- input$wait_treat_s2
-            parameters["q"] <- simul$results_s2$qq[simul$iter]
-            parameters$c1max[2] <- input$c1max_s2
-            parameters$c2max[2] <- input$c2max_s2
-            parameters$c3max[2] <- input$c3max_s2
-            parameters$cpmax[2] <- input$cpmax_s2
-            parameters$nupmax[2] <- 365/input$nupmax_s2
-            parameters$precmax[2] <- input$precmax_s2
-            
-            out <- ode(y = X, times = times, func = MedQual, parms = parameters, method = "vode")
-            source("./www/process_results.R", local = TRUE)
-            
-            # save key output (cumulative incidence)
-            simul$results_s2[simul$iter, "qq"] <- (simul$iter - 1)/input$total_q
-            simul$results_s2[simul$iter, "cinc"] <- sum(CumInc[nt, ]) - (prod(CumInc[nt,]) / (maxt - parameters$t_treat * 1000))
-            simul$results_s2[simul$iter, "cincres"] <- CumInc[nt, 2]
-            
-            # append results
-            simul$results_incidence_s2 <- bind_rows(simul$results_incidence_s2, 
-                                                    data.frame(
-                                                      q = simul$iter,
-                                                      t = t, 
-                                                      inc_month = inc_month[, 2],
-                                                      totinc_month = totinc_month,
-                                                      presinc_month = presinc_month,
-                                                      prev = prev[, 2],
-                                                      totprev = totprev,
-                                                      presprev = presprev,
-                                                      pop = 50 * pop[, 1] / parameters$N)
-            )
-            
-            showNotification(id = "model_running", closeButton = FALSE, 
-                             ui = HTML(paste0("Progress: ", round(simul$iter / (isolate(input$total_q) + 1) * 100), "%", " — ",
-                                              "total elapsed time: ", round(Sys.time() - simul$start_time, 1), " seconds")), 
-                             duration = NULL, type = "message", session = session)
-            
-            # -----------------------------------------------------------------
-            
-            # Stop at the end
-            if(simul$iter == isolate(input$total_q) + 1) {
-              simul$finished <- TRUE
-              removeNotification(id = "model_running", session = session)
-            }
-          }
-        })
-      })
-    })
-    
-    # Execute every time run_s1 (Run Scenario 1) is press
-    observeEvent(input$run_s1, {
-      
-      showNotification(id = "model_running", closeButton = FALSE, 
-                       ui = HTML(paste0(h3("Model Running"), p("it might take up to several minutes depending on the total number of steps choosen."))), 
-                       duration = NULL, type = "message", session = session)
-      
-      # Re-initiate values at each press of "Run" button
-      simul$iter <- 0
-      simul$start_time <- Sys.time()
-      simul$status_s1 <- 1
-      simul$status_s2 <- 0
-      simul$finished <- FALSE
-      simul$results_incidence_s1 <- data.frame(NULL)
-      simul$results_s1 <- data.frame(
-        nq = 1:(input$total_q + 1),
-        qq = (0:input$total_q)/input$total_q, 
-        cinc = NA, 
-        cincres = NA)
-      
-      observe({
-        # Re-execute this reactive expression immediately after it finishes (though you can also specify a longer time:
-        # e.g. 1000 means re-execute after 1000 milliseconds have passed since it was last executed)
-        # adapted from https://gist.github.com/bborgesr/61409e3852feb991336757f06392e52a
-        invalidateLater(1000, session)
-        isolate({
-          if (simul$finished == TRUE) {
-            return()
-          } else {
-            simul$iter <- simul$iter + 1
-            
-            # Placeholder for the extensive computing -------------------------
-            # -----------------------------------------------------------------
-            
-            # Correspondance rmarkdown ~ shiny app:
-            # i         ~ simul$iter
-            # nq        ~ input$total_q
-            # results_q ~ simul$results_incidence
-            # results   ~ simul$results
-            
-            # Scenario 1
-            # -----------------------------------------------------------------
-            
-            # Update parameters based on the UI and run the model
-            parameters$R0 <- rep(input$r0_s1, A)
-            parameters$wait_treat <- input$wait_treat_s1
-            parameters["q"] <- simul$results_s1$qq[simul$iter]
-            parameters$c1max[2] <- input$c1max_s1
-            parameters$c2max[2] <- input$c2max_s1
-            parameters$c3max[2] <- input$c3max_s1
-            parameters$cpmax[2] <- input$cpmax_s1
-            parameters$nupmax[2] <- 365/input$nupmax_s1
-            parameters$precmax[2] <- input$precmax_s1
-            
-            out <- ode(y = X, times = times, func = MedQual, parms = parameters, method = "vode")
-            source("./www/process_results.R", local = TRUE)
-            
-            # save key output (cumulative incidence)
-            simul$results_s1[simul$iter, "qq"] <- (simul$iter - 1)/input$total_q
-            simul$results_s1[simul$iter, "cinc"] <- sum(CumInc[nt, ]) - (prod(CumInc[nt,]) / (maxt - parameters$t_treat * 1000))
-            simul$results_s1[simul$iter, "cincres"] <- CumInc[nt, 2]
-            
-            # append results
-            simul$results_incidence_s1 <- bind_rows(simul$results_incidence_s1, 
-                                                    data.frame(
-                                                      q = simul$iter,
-                                                      t = t, 
-                                                      inc_month = inc_month[, 2],
-                                                      totinc_month = totinc_month,
-                                                      presinc_month = presinc_month,
-                                                      prev = prev[, 2],
-                                                      totprev = totprev,
-                                                      presprev = presprev,
-                                                      pop = 50 * pop[, 1] / parameters$N)
-            )
-            
-            showNotification(id = "model_running", closeButton = FALSE, 
-                             ui = HTML(paste0("Progress: ", round(simul$iter / (isolate(input$total_q) + 1) * 100), "%", " — ",
-                                              "total elapsed time: ", round(Sys.time() - simul$start_time, 1), " seconds")), 
-                             duration = NULL, type = "message", session = session)
-            
-            # -----------------------------------------------------------------
-            
-            # Stop at the end
-            if(simul$iter == isolate(input$total_q) + 1) {
-              simul$finished <- TRUE
-              removeNotification(id = "model_running", session = session)
-              simul$status_s2 <- 0
-            }
-          }
-        })
-      })
-    })
-    
-    
-    # Add a slider to explore different values of q
-    output$plot_navig_buttons <- renderUI({
-      if(simul$finished == FALSE) return(NULL)
-      else {tagList(
-        br(), br(),
-        sliderInput("slider_iter", label = "Medicine quality level",
-                    min = 0, max = 1, value = 1, ticks = TRUE, pre = "quality = ",
-                    step = 1/isolate(input$total_q), animate = list(interval = 1000, loop = FALSE), width = "100%")
-      )}
-    })
-    
-    
-    # Plot the incidence, scenario 1
-    output$plot_incidence_s1 <- renderPlot({
-      req(simul$iter >= 1 & simul$status_s1 != 0)
-      
-      iter <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                     round(input$slider_iter * isolate(input$total_q)) + 1,
-                     simul$iter)
-      
-      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           round(input$slider_iter * isolate(input$total_q)),
-                           simul$iter - 1)
-      
-      ggplot(simul$results_incidence_s1 %>%
-               filter(t > 5, q == iter),
-             aes(x = t)) +
-        geom_line(aes(y = totinc_month), lwd = 1.5) +
-        geom_line(aes(y = inc_month), col = "red", lty = 2, lwd = 1.5) +
-        labs(title = "Incidence", subtitle = paste0("Quality = ", selected_q / isolate(input$total_q)),
-             x = "Years", y = "Cases per 1,000 per month") +
-        theme_minimal(base_size = 17)
-    })
-    
-    # Plot the incidence, scenario 2
-    output$plot_incidence_s2 <- renderPlot({
-      req(simul$iter >= 1 & simul$status_s2 != 0)
-      
-      iter <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                     round(input$slider_iter * isolate(input$total_q)) + 1,
-                     simul$iter)
-      
-      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           round(input$slider_iter * isolate(input$total_q)),
-                           simul$iter - 1)
-      
-      
-      ggplot(simul$results_incidence_s2 %>% 
-               filter(t > 5, q == iter), 
-             aes(x = t)) +
-        geom_line(aes(y = totinc_month), lwd = 1.5) +
-        geom_line(aes(y = inc_month), col = "red", lty = 2, lwd = 1.5) +
-        labs(title = "Incidence", subtitle = paste0("Quality = ", selected_q / isolate(input$total_q)),
-             x = "Years", y = "Cases per 1,000 per month") +
-        theme_minimal(base_size = 17)
-    })
-    
-    # Plot the global incidence
-    output$plot_global_s1 <- renderPlot({
-      req(simul$iter >= 2 & simul$status_s1 != 0)
-      
-      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           round(input$slider_iter * isolate(input$total_q)),
-                           simul$iter - 1)
-      
-      ggplot(data = simul$results_s1 %>% filter(qq <= selected_q / isolate(input$total_q)), aes(x = qq, y = cinc)) +
-        geom_line(lwd = 1.5) +
-        geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.5) +
-        geom_vline(xintercept = selected_q / isolate(input$total_q), lty = 2) +
-        scale_x_continuous(limits = c(0, 1)) +
-        labs(title = "Impact of Medicine Quality",
-             x = "Medicine quality level (proxy for API)",
-             y = "Cumulative incidence") +
-        theme_minimal(base_size = 17)
-    })
-    
-    output$plot_global_s2 <- renderPlot({
-      req(simul$iter >= 2 & simul$status_s2 != 0)
-      
-      selected_q <- ifelse(simul$finished == TRUE & !is.null(input$slider_iter), 
-                           round(input$slider_iter * isolate(input$total_q)),
-                           simul$iter - 1)
-      
-      ggplot(data = simul$results_s1 %>% filter(qq <= selected_q / isolate(input$total_q)), aes(x = qq, y = cinc)) +
-        geom_line(lwd = 1.5) +
-        geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.5) +
-        geom_vline(xintercept = selected_q / isolate(input$total_q), lty = 2) +
-        scale_x_continuous(limits = c(0, 1)) +
-        labs(title = "Impact of Medicine Quality", 
-             x = "Medicine quality level (proxy for API)", 
-             y = "Cumulative incidence") +
-        theme_minimal(base_size = 17)
-    })
-    
+shinyServer(function(input, output, session) {
+  # Display parameters values
+  output$parameters_values <-
+    renderText(paste0(
+      em(
+        "Placeholder for some info on the values of the parameters common
+        to both scenarios: population, proportion of non-immune cases that become
+        clinical, etc."
+      )
+      ))
+  
+  # Scenario 1
+  output$info_c1max_s1 <-
+    renderText(paste0("Baseline value is ", parameters$c1max[1]))
+  output$info_c2max_s1 <-
+    renderText(paste0("Baseline value is ", parameters$c2max[1]))
+  output$info_c3max_s1 <-
+    renderText(paste0("Baseline value is ", parameters$c3max[1]))
+  output$info_cpmax_s1 <-
+    renderText(paste0("Baseline value is ", parameters$cpmax[1]))
+  output$info_precmax_s1 <-
+    renderText(paste0("Baseline value is ", parameters$precmax[1]))
+  
+  # Scenario 2
+  output$info_c1max_s2 <-
+    renderText(paste0("Baseline value is ", parameters$c1max[1]))
+  output$info_c2max_s2 <-
+    renderText(paste0("Baseline value is ", parameters$c2max[1]))
+  output$info_c3max_s2 <-
+    renderText(paste0("Baseline value is ", parameters$c3max[1]))
+  output$info_cpmax_s2 <-
+    renderText(paste0("Baseline value is ", parameters$cpmax[1]))
+  output$info_precmax_s2 <-
+    renderText(paste0("Baseline value is ", parameters$precmax[1]))
+  
+  
+  # Object to store results
+  simul <- reactiveValues(finished = FALSE)
+  
+  
+  
+  # Run Both Scenario ---------------------------------------------------------------------------------------------------------
+  observeEvent(input$run_both, {
+    source("./www/run_both_scenario.R", local = TRUE)
   })
+  
+  
+  
+  # Run Scenario 1 ------------------------------------------------------------------------------------------------------------
+  observeEvent(input$run_s1, {
+    source("./www/run_scenario1.R", local = TRUE)
+  })
+  
+  
+  # Run Scenario 2 ------------------------------------------------------------------------------------------------------------
+  observeEvent(input$run_s2, {
+    source("./www/run_scenario2.R", local = TRUE)
+  })
+  
+  
+  # Slider for navigation -----------------------------------------------------------------------------------------------------
+  
+  output$plot_navig_buttons <- renderUI({
+    if (simul$finished == FALSE)
+      return(NULL)
+    else {
+      tagList(
+        br(),
+        br(),
+        sliderTextInput(
+          "slider_iter",
+          label = NULL,
+          choices = isolate(round((0:input$total_q)/input$total_q, 2)),
+          selected = 1,
+          grid = TRUE,
+          animate = list(interval = 1200, loop = FALSE),
+          width = "100%"
+        )
+      )
+    }
+  })
+  
+  
+  
+  q = 6
+  
+  
+  
+  # Plot Output Scenario 1 ----------------------------------------------------------------------------------------------------
+  
+  output$plot_scenario1 <- renderPlot({
+    req(simul$iter >= 1 & simul$status_s1 != 0)
+    
+    selected_q <-
+      ifelse(
+        simul$finished == TRUE & !is.null(input$slider_iter),
+        round(isolate(input$total_q) * as.numeric(input$slider_iter)),
+        simul$iter - 1
+      )
+    
+    plot_incidence <-
+      ggplot(simul$results_incidence_s1 %>% filter(t > 5, q == selected_q + 1),
+             aes(x = t)) +
+      geom_line(aes(y = totinc_month), lwd = 1.5) +
+      geom_line(aes(y = inc_month),
+                col = "red",
+                lty = 2,
+                lwd = 1.5) +
+      labs(
+        title = paste0("Incidence — Quality = ", round(
+          selected_q / isolate(input$total_q), 2
+        )),
+        x = "Years",
+        y = "Cases per 1,000 per month"
+      ) +
+      theme_minimal(base_size = 17)
+    
+    
+    plot_global <-
+      ggplot(data = simul$results_s1 %>% filter(qq <= selected_q / isolate(input$total_q)),
+             aes(x = qq)) +
+      geom_point(aes(y = cinc), size = 3) +
+      geom_point(aes(y = cincres), size = 3, col = "red") +
+      geom_vline(xintercept = selected_q / isolate(input$total_q),
+                 lty = 2) +
+      scale_x_continuous(limits = c(0, 1)) +
+      labs(title = "Impact of Medicine Quality",
+           x = "Medicine quality level (proxy for API)",
+           y = "Cumulative incidence") +
+      theme_minimal(base_size = 17)
+    
+    if(selected_q > 0) {plot_global <- plot_global + geom_line(aes(y = cinc), lwd = 1.2) +
+      geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.2)}
+    
+    grid.arrange(plot_incidence, plot_global, ncol = 1)
+  })
+  
+  # Plot Output Scenario 2 ----------------------------------------------------------------------------------------------------
+  
+  output$plot_scenario2 <- renderPlot({
+    req(simul$iter >= 1 & simul$status_s2 != 0)
+    
+    selected_q <-
+      ifelse(
+        simul$finished == TRUE & !is.null(input$slider_iter),
+        round(isolate(input$total_q) * as.numeric(input$slider_iter)),
+        simul$iter - 1
+      )
+    
+    plot_incidence <-
+      ggplot(simul$results_incidence_s2 %>% filter(t > 5, q == selected_q + 1),
+             aes(x = t)) +
+      geom_line(aes(y = totinc_month), lwd = 1.5) +
+      geom_line(aes(y = inc_month),
+                col = "red",
+                lty = 2,
+                lwd = 1.5) +
+      labs(
+        title = paste0("Incidence — Quality = ", round(
+          selected_q / isolate(input$total_q), 2
+        )),
+        x = "Years",
+        y = "Cases per 1,000 per month"
+      ) +
+      theme_minimal(base_size = 17)
+    
+    
+    plot_global <-
+      ggplot(data = simul$results_s2 %>% filter(qq <= selected_q / isolate(input$total_q)),
+             aes(x = qq)) +
+      geom_point(aes(y = cinc), size = 3) +
+      geom_point(aes(y = cincres), size = 3, col = "red") +
+      geom_vline(xintercept = selected_q / isolate(input$total_q),
+                 lty = 2) +
+      scale_x_continuous(limits = c(0, 1)) +
+      labs(title = "Impact of Medicine Quality",
+           x = "Medicine quality level (proxy for API)",
+           y = "Cumulative incidence") +
+      theme_minimal(base_size = 17)
+    
+    if(selected_q > 0) {plot_global <- plot_global + geom_line(aes(y = cinc), lwd = 1.2) +
+      geom_line(aes(y = cincres), col = "red", lty = 2, lwd = 1.2)}
+    
+    grid.arrange(plot_incidence, plot_global, ncol = 1)
+  })
+})

@@ -52,13 +52,13 @@ https://stackoverflow.com/questions/20850483/how-to-put-a-box-and-its-label-in-t
 
 /* http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3 */
 
-.borderscenario12 {
+.borderscenario1 {
   border: solid #e41a1c 3px;
   padding: 0 5px 5px 10px;
   border-radius: 8px;
 }
 
-.borderscenario22 {
+.borderscenario2 {
   border: solid #377eb8 3px;
   padding: 0 5px 5px 10px;
   border-radius: 8px;
@@ -72,13 +72,13 @@ https://stackoverflow.com/questions/20850483/how-to-put-a-box-and-its-label-in-t
 }
 
 
-.cent2 {
+.cent {
   padding: 5px 5px 5px 5px;
   text-align: center;
   margin: 0 auto;
 }
 
-.right2 {
+.right {
   padding: 5px 5px 5px 5px;
   float: right;
 }

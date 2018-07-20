@@ -4,6 +4,7 @@
 # -----------------------------------------------------------------------------
 
 library(deSolve)
+library(gridExtra)
 library(shiny)
 library(shinycssloaders)
 library(shinythemes)
