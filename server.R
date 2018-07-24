@@ -78,7 +78,7 @@ shinyServer(function(input, output, session) {
           choices = isolate(round((0:input$total_q)/input$total_q, 2)),
           selected = 1,
           grid = TRUE,
-          animate = list(interval = 1200, loop = FALSE),
+          animate = FALSE,
           width = "100%"
         )
       )

@@ -28,7 +28,7 @@ fluidPage(
           width = 6,
           
           div(
-            class = "borderscenario1",
+            class = "border-blue",
             div(class = "cent", h3("Scenario 1")),
             fluidRow(
               column(
@@ -71,7 +71,7 @@ fluidPage(
                         "Proportion who cure on day 1 of treatment",
                         min = 0,
                         max = 1,
-                        value = 0
+                        value = parameters$c1max[1]
                       ),
                       htmlOutput("info_c1max_s1"),
                       hr(),
@@ -80,7 +80,7 @@ fluidPage(
                         "Proportion who cure during partner drug treatment",
                         min = 0,
                         max = 1,
-                        value = 0.6
+                        value = parameters$cpmax[1]
                       ),
                       htmlOutput("info_cpmax_s1")
                     ),
@@ -91,7 +91,7 @@ fluidPage(
                         "Proportion who cure on day 2 of treatment",
                         min = 0,
                         max = 1,
-                        value = 0
+                        value = parameters$c2max[1]
                       ),
                       htmlOutput("info_c2max_s1"),
                       hr(),
@@ -119,7 +119,7 @@ fluidPage(
                         "Proportion who recrudesce",
                         min = 0,
                         max = 1,
-                        value = 0.5
+                        value = parameters$precmax[1]
                       ),
                       htmlOutput("info_precmax_s1")
                     )
@@ -132,7 +132,7 @@ fluidPage(
         column(
           width = 6,
           div(
-            class = "borderscenario2",
+            class = "border-green",
             div(class = "cent", h3("Scenario 2")),
             fluidRow(
               column(
@@ -237,7 +237,7 @@ fluidPage(
         # Common to all scenarios
         fluidRow(column(width = 3,
                         div(
-                          class = "right",
+                          class = "cent-margin",
                           div(
                             id = "inline",
                             HTML(
@@ -253,7 +253,7 @@ fluidPage(
                  column(
                    width = 6,
                    div(
-                     class = "cent",
+                     class = "cent-margin",
                      actionButton("run_s1", "Run Scenario 1"),
                      actionButton("run_both", "Run both Scenarios"),
                      actionButton("run_s2", "Run Scenario 2")
@@ -264,11 +264,11 @@ fluidPage(
         
         # Separate columns for each scenario
         fluidRow(column(
-          width = 6, div(class = "borderscenario1",
+          width = 6, div(class = "border-blue",
                          plotOutput("plot_scenario1", height = "600px"))
         ),
         column(
-          width = 6, div(class = "borderscenario2",
+          width = 6, div(class = "border-green",
                          plotOutput("plot_scenario2", height = "600px"))
         )),
         
