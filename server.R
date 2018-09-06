@@ -78,18 +78,12 @@ shinyServer(function(input, output, session) {
           choices = isolate(round((0:input$total_q)/input$total_q, 2)),
           selected = 1,
           grid = TRUE,
-          animate = FALSE,
+          animate = TRUE,
           width = "100%"
         )
       )
     }
   })
-  
-  
-  
-  q = 6
-  
-  
   
   # Plot Output Scenario 1 ----------------------------------------------------------------------------------------------------
   
@@ -102,6 +96,10 @@ shinyServer(function(input, output, session) {
         round(isolate(input$total_q) * as.numeric(input$slider_iter)),
         simul$iter - 1
       )
+    
+    # Console output
+    print(paste0("Dataframe of results, scenario 1 ", " -- selected q: ", selected_q))
+    print(head(simul$results_incidence_s1 %>% filter(t > 5, q == selected_q + 1)))
     
     plot_incidence <-
       ggplot(simul$results_incidence_s1 %>% filter(t > 5, q == selected_q + 1),
@@ -151,6 +149,10 @@ shinyServer(function(input, output, session) {
         round(isolate(input$total_q) * as.numeric(input$slider_iter)),
         simul$iter - 1
       )
+    
+    # Console output
+    print(paste0("Dataframe of results, scenario 2 ", " -- selected q: ", selected_q))
+    print(head(simul$results_incidence_s2 %>% filter(t > 5, q == selected_q + 1)))
     
     plot_incidence <-
       ggplot(simul$results_incidence_s2 %>% filter(t > 5, q == selected_q + 1),

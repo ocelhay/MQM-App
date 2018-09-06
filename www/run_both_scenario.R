@@ -29,21 +29,13 @@ simul$results_s2 <- data.frame(
   cincres = NA
 )
 
-# Update parameters based on the values in the UI
-parameters$R0 <- rep(input$r0_s1, A)
-parameters$wait_treat <- input$wait_treat_s1
-parameters$c1max[2] <- input$c1max_s1
-parameters$c2max[2] <- input$c2max_s1
-parameters$c3max[2] <- input$c3max_s1
-parameters$cpmax[2] <- input$cpmax_s1
-parameters$nupmax[2] <- 365 / input$nupmax_s1
-parameters$precmax[2] <- input$precmax_s1
+
 
 
 observe({
-  # Re-execute this reactive expression 250ms after it finishes
+  # Re-execute this reactive expression xxxms after it finishes
   # adapted from https://gist.github.com/bborgesr/61409e3852feb991336757f06392e52a
-  invalidateLater(250, session)
+  invalidateLater(100, session)
   isolate({
     if (simul$finished == TRUE) {
       return()
@@ -59,9 +51,16 @@ observe({
       
       # Scenario 1 ----------------------------------------------------------------------------------------------------------------
       
-      
-      
-      
+      # Update parameters based on the values in the UI
+      parameters$R0 <- rep(input$r0_s1, A)
+      parameters$wait_treat <- input$wait_treat_s1
+      parameters$c1max[2] <- input$c1max_s1
+      parameters$c2max[2] <- input$c2max_s1
+      parameters$c3max[2] <- input$c3max_s1
+      parameters$cpmax[2] <- input$cpmax_s1
+      parameters$nupmax[2] <- 365 / input$nupmax_s1
+      parameters$precmax[2] <- input$precmax_s1
+
       parameters["q"] <- simul$results_s1$qq[simul$iter]
       out <-
         ode(
@@ -74,10 +73,8 @@ observe({
       source("./www/process_results.R", local = TRUE)
       
       # save key output (cumulative incidence)
-      simul$results_s1[simul$iter, "qq"] <-
-        (simul$iter - 1) / input$total_q
-      simul$results_s1[simul$iter, "cinc"] <-
-        sum(CumInc[nt,]) - (prod(CumInc[nt, ]) / (maxt - parameters$t_treat * 1000))
+      simul$results_s1[simul$iter, "qq"] <- (simul$iter - 1) / input$total_q
+      simul$results_s1[simul$iter, "cinc"] <- sum(CumInc[nt,]) - (prod(CumInc[nt, ]) / (maxt - parameters$t_treat * 1000))
       simul$results_s1[simul$iter, "cincres"] <- CumInc[nt, 2]
       
       # append results
@@ -100,9 +97,7 @@ observe({
       
       
       # Scenario 2 ----------------------------------------------------------------------------------------------------------------
-      
-      
-      
+
       # Update parameters and run the model
       parameters$R0 <- rep(input$r0_s2, A)
       parameters$wait_treat <- input$wait_treat_s2
@@ -175,6 +170,8 @@ observe({
       if (simul$iter == isolate(input$total_q) + 1) {
         simul$finished <- TRUE
         removeNotification(id = "model_running", session = session)
+        # print(simul$results_incidence_s1)
+        # print(simul$results_incidence_s2)
       }
     }
   })

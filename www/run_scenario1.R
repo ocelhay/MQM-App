@@ -23,27 +23,19 @@ showNotification(
   )
   
   observe({
-    # Re-execute this reactive expression immediately after it finishes (though you can also specify a longer time:
-    # e.g. 1000 means re-execute after 1000 milliseconds have passed since it was last executed)
     # adapted from https://gist.github.com/bborgesr/61409e3852feb991336757f06392e52a
-    invalidateLater(250, session)
+    invalidateLater(100, session)
     isolate({
       if (simul$finished == TRUE) {
         return()
       } else {
         simul$iter <- simul$iter + 1
         
-        # Placeholder for the extensive computing -------------------------
-        # -----------------------------------------------------------------
-        
         # Correspondance rmarkdown ~ shiny app:
         # i         ~ simul$iter
         # nq        ~ input$total_q
         # results_q ~ simul$results_incidence
         # results   ~ simul$results
-        
-        # Scenario 1
-        # -----------------------------------------------------------------
         
         # Update parameters based on the UI and run the model
         parameters$R0 <- rep(input$r0_s1, A)
