@@ -48,13 +48,11 @@ showNotification(
         parameters$nupmax[2] <- 365 / input$nupmax_s1
         parameters$precmax[2] <- input$precmax_s1
         
+        set.seed(2018)
         out <-
           ode(
-            y = X,
-            times = times,
-            func = MedQual,
-            parms = parameters,
-            method = "vode"
+            y = X, times = times,
+            func = MedQual, parms = parameters, method = "vode"
           )
         source("./www/process_results.R", local = TRUE)
         

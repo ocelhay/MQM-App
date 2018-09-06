@@ -48,6 +48,7 @@ observe({
       parameters$nupmax[2] <- 365 / input$nupmax_s2
       parameters$precmax[2] <- input$precmax_s2
       
+      set.seed(2018)
       out <-
         ode(
           y = X,

@@ -1,3 +1,4 @@
+
 # Extract and process results
 t <- out[, 1]
 S <- out[, index_X == "Sindex"]
