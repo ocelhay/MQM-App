@@ -1,9 +1,5 @@
-# Medicine Quality Modelling (MQM) App
+## Medicine Quality Modelling (MQM) App
 
-An application to display results of the modelling of medicine quality.
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-Developed using R shiny framework. [https://cran.r-project.org/package=shiny](https://cran.r-project.org/package=shiny).
-
-The application can be accessed at [https://moru.shinyapps.io/MQM-App/](https://moru.shinyapps.io/MQM-App/)
-
-Funded by Wellcome Trust.
+[https://moru.shinyapps.io/MQM-App/](https://moru.shinyapps.io/MQM-App/)
